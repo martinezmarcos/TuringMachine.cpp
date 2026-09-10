@@ -1,4 +1,5 @@
-#include "turingMachine.hpp"
+#include "turingMachine.hpp" 
+#include <cstdlib>
 
 TuringMachine::TuringMachine(std::string initialState, std::string initialTape) {
     currentState = initialState;
@@ -45,10 +46,9 @@ bool TuringMachine::step() {
 }
 
 void TuringMachine::printState() {
-    // ANSI
-    std::cout << "\033[2J\033[H";
+    system("cls"); 
     
-    std::cout << "--- EMULADOR DE MAQUINA DE TURING ---\n\n";
+    std::cout << "--- MAQUINA DE TURING ---\n\n";
     std::cout << "Estado actual: [" << currentState << "]\n";
     std::cout << "Cinta:  ";
     
@@ -62,7 +62,6 @@ void TuringMachine::printState() {
     }
     std::cout << "^\n\n";
 }
-
 bool TuringMachine::loadProgram(const std::string& filepath) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
