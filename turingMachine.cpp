@@ -1,8 +1,9 @@
-#include "TuringMachine.hpp"
+#include "turingMachine.hpp"
 
 TuringMachine::TuringMachine(std::string initialState, std::string initialTape) {
     currentState = initialState;
     headPosition = 0;
+    
     if (initialTape.empty()) {
         tape.push_back('_');
     } else {
@@ -13,7 +14,7 @@ TuringMachine::TuringMachine(std::string initialState, std::string initialTape) 
 }
 
 std::string TuringMachine::makeKey(const std::string& state, char symbol) {
-    return state + "|" + symbol; // "q0|1 ejemplo"
+    return state + "|" + symbol;
 }
 
 void TuringMachine::addTransition(std::string state, char readSym, std::string nextState, char writeSym, int move) {
@@ -21,12 +22,11 @@ void TuringMachine::addTransition(std::string state, char readSym, std::string n
 }
 
 bool TuringMachine::step() {
-    // memoria infinita simulada
     if (headPosition >= (int)tape.size()) {
         tape.push_back('_'); 
     } else if (headPosition < 0) {
         tape.push_front('_'); 
-        headPosition = 0; // index
+        headPosition = 0; 
     }
 
     char currentSymbol = tape[headPosition];
@@ -37,7 +37,6 @@ bool TuringMachine::step() {
         tape[headPosition] = action.writeSymbol;
         currentState = action.nextState;
         headPosition += action.moveDirection;
-        
         return true; 
     } else {
         currentState = "HALT"; 
@@ -46,15 +45,51 @@ bool TuringMachine::step() {
 }
 
 void TuringMachine::printState() {
-    std::cout << "Estado: [" << currentState << "]\nCinta:  ";
+    // ANSI
+    std::cout << "\033[2J\033[H";
+    
+    std::cout << "--- EMULADOR DE MAQUINA DE TURING ---\n\n";
+    std::cout << "Estado actual: [" << currentState << "]\n";
+    std::cout << "Cinta:  ";
+    
     for (int i = 0; i < (int)tape.size(); ++i) {
         std::cout << tape[i] << " ";
     }
-    std::cout << "\n        ";   
+    std::cout << "\n        "; 
+    
     for (int i = 0; i < headPosition; ++i) {
         std::cout << "  "; 
     }
     std::cout << "^\n\n";
+}
+
+bool TuringMachine::loadProgram(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: No se pudo abrir el archivo " << filepath << "\n";
+        return false;
+    }
+
+    std::string line;
+    int ruleCount = 0;
+    
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+
+        std::istringstream iss(line);
+        std::string state, nextState;
+        char readSym, writeSym;
+        int move;
+
+        if (iss >> state >> readSym >> nextState >> writeSym >> move) {
+            addTransition(state, readSym, nextState, writeSym, move);
+            ruleCount++;
+        }
+    }
+    
+    std::cout << "Programa cargado exitosamente (" << ruleCount << " reglas).\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1)); 
+    return true;
 }
 
 void TuringMachine::run(int delayMs, int maxSteps) {
@@ -62,7 +97,8 @@ void TuringMachine::run(int delayMs, int maxSteps) {
     printState();
     
     while (currentState != "HALT" && steps < maxSteps) {
-        if (!step()) break; 
+        if (!step()) break;
+        
         printState();
         steps++;
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
